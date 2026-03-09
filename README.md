@@ -2,7 +2,7 @@
 
 
 ```
-src/main/java/com/example/room_status
+src/main/java/com/example/roomstatus
 │
 ├── RoomStatusApplication.java
 │

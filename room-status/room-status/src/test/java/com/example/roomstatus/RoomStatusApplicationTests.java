@@ -1,4 +1,4 @@
-package com.example.room_status;
+package com.example.roomstatus;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
