@@ -1,18 +1,12 @@
 spring:
   application:
     name: room-status
-  cache:
-    cache-names:
-      - buildings
-      - rooms
-      - room-details
-      - schedules
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info
   endpoint:
     health:
       show-details: always
@@ -20,11 +14,3 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
-
-app:
-  cache:
-    buildings-ttl-minutes: 60
-    rooms-ttl-minutes: 5
-  google:
-    service-account-key-path: ${GOOGLE_SERVICE_ACCOUNT_KEY_PATH:}
-    delegated-user: ${GOOGLE_DELEGATED_USER:}
