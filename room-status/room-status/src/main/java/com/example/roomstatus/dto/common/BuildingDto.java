@@ -1,5 +1,11 @@
 package com.example.roomstatus.dto.common;
 
-public class BuildingDto {
-    
+import java.util.List;
+
+public record BuildingDto(
+        String id,
+        String name,
+        String address,
+        List<String> floors
+) {
 }
