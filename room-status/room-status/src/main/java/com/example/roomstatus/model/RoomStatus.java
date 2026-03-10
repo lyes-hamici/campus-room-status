@@ -1,5 +1,8 @@
 package com.example.roomstatus.model;
 
-public class RoomStatus {
-    
+public enum RoomStatus {
+    AVAILABLE,
+    OCCUPIED,
+    UPCOMING,
+    MAINTENANCE
 }
