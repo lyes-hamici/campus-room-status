@@ -1,5 +1,11 @@
 package com.example.roomstatus.dto.response;
 
-public class RoomDetailResponse {
-    
+import com.example.roomstatus.dto.common.RoomDto;
+
+import java.time.Instant;
+
+public record RoomDetailResponse(
+        Instant timestamp,
+        RoomDto room
+) {
 }

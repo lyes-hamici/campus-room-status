@@ -1,5 +1,13 @@
 package com.example.roomstatus.dto.response;
 
-public class HealthResponse {
-    
+import java.time.Instant;
+
+public record HealthResponse(
+        String status,
+        String version,
+        boolean googleAdminApiConnected,
+        boolean googleCalendarApiConnected,
+        Instant lastSync,
+        long responseTimeMs
+) {
 }
