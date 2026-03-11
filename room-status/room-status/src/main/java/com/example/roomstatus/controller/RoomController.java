@@ -1,19 +1,22 @@
 package com.example.roomstatus.controller;
 
+import com.example.roomstatus.dto.request.RoomSearchRequest;
 import com.example.roomstatus.dto.response.RoomDetailResponse;
 import com.example.roomstatus.dto.response.RoomListResponse;
 import com.example.roomstatus.dto.response.RoomScheduleResponse;
 import com.example.roomstatus.service.RoomService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
+@RequestMapping("/api/v1")
 public class RoomController {
 
     private final RoomService roomService;
@@ -22,27 +25,37 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    @GetMapping("/api/v1/rooms")
+    @GetMapping("/rooms")
     public RoomListResponse getRooms(
             @RequestParam(required = false) String building,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            @RequestParam(name = "capacity_min", required = false) Integer capacityMin,
+            @RequestParam(name = "capacity_max", required = false) Integer capacityMax,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order
     ) {
-        Map<String, Object> filters = Map.of(
-                "building", building,
-                "status", status
+        RoomSearchRequest request = new RoomSearchRequest(
+                building,
+                type,
+                status,
+                capacityMin,
+                capacityMax,
+                sort,
+                order
         );
 
-        var rooms = roomService.getRooms(building, status);
+        var rooms = roomService.getRooms(request);
 
         return new RoomListResponse(
                 Instant.now(),
-                filters,
+                roomService.toFilterDto(request),
                 rooms.size(),
                 rooms
         );
     }
 
-    @GetMapping("/api/v1/rooms/{code}")
+    @GetMapping("/rooms/{code}")
     public RoomDetailResponse getRoomByCode(@PathVariable String code) {
         return new RoomDetailResponse(
                 Instant.now(),
@@ -50,25 +63,12 @@ public class RoomController {
         );
     }
 
-    @GetMapping("/api/v1/rooms/{code}/schedule")
+    @GetMapping("/rooms/{code}/schedule")
     public RoomScheduleResponse getRoomSchedule(
             @PathVariable String code,
-            @RequestParam String start,
-            @RequestParam String end
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
-        var result = roomService.getRoomSchedule(code, start, end);
-
-        @SuppressWarnings("unchecked")
-        List<com.example.roomstatus.dto.common.EventDto> events =
-                (List<com.example.roomstatus.dto.common.EventDto>) result.get("events");
-
-        return new RoomScheduleResponse(
-                (String) result.get("roomCode"),
-                Map.of(
-                        "start", (String) result.get("start"),
-                        "end", (String) result.get("end")
-                ),
-                events
-        );
+        return roomService.getRoomSchedule(code, start, end);
     }
 }
