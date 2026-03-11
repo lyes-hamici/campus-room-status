@@ -1,5 +1,15 @@
 package com.example.roomstatus.model;
 
-public class Room {
-    
+import java.util.List;
+
+public record Room(
+        String code,
+        String name,
+        Building building,
+        String floor,
+        int capacity,
+        String type,
+        boolean maintenance,
+        List<RoomEvent> scheduleToday
+) {
 }

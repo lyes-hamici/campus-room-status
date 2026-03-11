@@ -1,5 +1,11 @@
 package com.example.roomstatus.model;
 
-public class RoomEvent {
-    
+import java.time.Instant;
+
+public record RoomEvent(
+        String title,
+        Instant start,
+        Instant end,
+        String organizer
+) {
 }

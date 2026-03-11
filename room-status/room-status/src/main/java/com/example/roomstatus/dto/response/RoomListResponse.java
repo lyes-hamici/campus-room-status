@@ -1,15 +1,15 @@
 package com.example.roomstatus.dto.response;
 
-import com.example.roomstatus.dto.common.RoomDto;
+import com.example.roomstatus.dto.common.FilterDto;
+import com.example.roomstatus.dto.common.RoomSummaryDto;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 public record RoomListResponse(
         Instant timestamp,
-        Map<String, Object> filters,
+        FilterDto filters,
         int count,
-        List<RoomDto> rooms
+        List<RoomSummaryDto> rooms
 ) {
 }
