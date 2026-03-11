@@ -3,6 +3,7 @@ package com.example.roomstatus.service;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.interceptor.SimpleKey;
 
@@ -21,7 +22,9 @@ class BuildingServiceCacheTest {
     void shouldPopulateBuildingsCache() {
         buildingService.getBuildings();
 
-        assertThat(cacheManager.getCache("buildings")).isNotNull();
-        assertThat(cacheManager.getCache("buildings").get(SimpleKey.EMPTY)).isNotNull();
+        Cache cache = cacheManager.getCache("buildings");
+
+        assertThat(cache).isNotNull();
+        assertThat(cache.get(SimpleKey.EMPTY)).isNotNull();
     }
 }

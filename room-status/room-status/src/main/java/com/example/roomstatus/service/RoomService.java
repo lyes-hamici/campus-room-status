@@ -44,12 +44,14 @@ public class RoomService {
 
     @Cacheable("rooms")
     public List<RoomSummaryDto> getRooms(RoomSearchRequest request) {
-        validateSearchRequest(request);
+        RoomSearchRequest normalizedRequest = normalizeRequest(request);
+        validateSearchRequest(normalizedRequest);
+
         Instant referenceTime = Instant.now();
 
         return mockCampusDataService.getRooms().stream()
-                .filter(room -> matchesFilters(room, request, referenceTime))
-                .sorted(buildComparator(request, referenceTime))
+                .filter(room -> matchesFilters(room, normalizedRequest, referenceTime))
+                .sorted(buildComparator(normalizedRequest, referenceTime))
                 .map(room -> roomMapper.toSummaryDto(room, referenceTime))
                 .toList();
     }
@@ -62,11 +64,17 @@ public class RoomService {
 
     @Cacheable(value = "room-schedules", key = "#code + ':' + #start + ':' + #end")
     public RoomScheduleResponse getRoomSchedule(String code, LocalDate start, LocalDate end) {
+        String normalizedCode = normalizeRequiredText(code, "code");
+
+        if (start == null || end == null) {
+            throw new InvalidRequestException("Les paramètres 'start' et 'end' sont obligatoires");
+        }
+
         if (start.isAfter(end)) {
             throw new InvalidRequestException("La date de début doit être antérieure ou égale à la date de fin");
         }
 
-        Room room = findRoomByCode(code);
+        Room room = findRoomByCode(normalizedCode);
 
         List<com.example.roomstatus.model.RoomEvent> events = room.scheduleToday().stream()
                 .filter(event -> DateTimeUtils.isWithinDateRange(event, start, end))
@@ -80,23 +88,27 @@ public class RoomService {
     }
 
     public FilterDto toFilterDto(RoomSearchRequest request) {
+        RoomSearchRequest normalizedRequest = normalizeRequest(request);
+
         return new FilterDto(
-                request.building(),
-                request.type(),
-                request.status(),
-                request.capacityMin(),
-                request.capacityMax(),
-                request.sort(),
-                request.order()
+                normalizedRequest.building(),
+                normalizedRequest.type(),
+                normalizedRequest.status(),
+                normalizedRequest.capacityMin(),
+                normalizedRequest.capacityMax(),
+                normalizedRequest.sort(),
+                normalizedRequest.order()
         );
     }
 
     private Room findRoomByCode(String code) {
+        String normalizedCode = normalizeRequiredText(code, "code");
+
         return mockCampusDataService.getRooms().stream()
-                .filter(room -> room.code().equalsIgnoreCase(code))
+                .filter(room -> room.code().equalsIgnoreCase(normalizedCode))
                 .findFirst()
                 .orElseThrow(() -> new RoomNotFoundException(
-                        "La salle avec le code '%s' n'existe pas".formatted(code)
+                        "La salle avec le code '%s' n'existe pas".formatted(normalizedCode)
                 ));
     }
 
@@ -112,6 +124,10 @@ public class RoomService {
         if (request.capacityMin() != null && request.capacityMax() != null
                 && request.capacityMin() > request.capacityMax()) {
             throw new InvalidRequestException("capacity_min ne peut pas être supérieur à capacity_max");
+        }
+
+        if (request.order() != null && request.sort() == null) {
+            throw new InvalidRequestException("order ne peut pas être utilisé sans sort");
         }
 
         if (request.status() != null && !ALLOWED_STATUSES.contains(request.status().toLowerCase(Locale.ROOT))) {
@@ -154,6 +170,26 @@ public class RoomService {
         };
 
         return "desc".equals(order) ? comparator.reversed() : comparator;
+    }
+
+    private RoomSearchRequest normalizeRequest(RoomSearchRequest request) {
+        if (request == null) {
+            return RoomSearchRequest.empty();
+        }
+        return request.normalized();
+    }
+
+    private String normalizeRequiredText(String value, String fieldName) {
+        if (value == null) {
+            throw new InvalidRequestException("Le paramètre '%s' est obligatoire".formatted(fieldName));
+        }
+
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            throw new InvalidRequestException("Le paramètre '%s' est obligatoire".formatted(fieldName));
+        }
+
+        return trimmed;
     }
 
     @SafeVarargs
