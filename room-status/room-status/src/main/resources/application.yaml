@@ -1,6 +1,12 @@
 spring:
   application:
     name: room-status
+  cache:
+    cache-names:
+      - buildings
+      - rooms
+      - room-details
+      - room-schedules
 
 management:
   endpoints:
