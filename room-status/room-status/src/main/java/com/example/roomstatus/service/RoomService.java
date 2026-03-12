@@ -6,10 +6,8 @@ import com.example.roomstatus.dto.common.RoomSummaryDto;
 import com.example.roomstatus.dto.request.RoomSearchRequest;
 import com.example.roomstatus.dto.response.RoomScheduleResponse;
 import com.example.roomstatus.exception.InvalidRequestException;
-import com.example.roomstatus.exception.RoomNotFoundException;
 import com.example.roomstatus.mapper.RoomMapper;
 import com.example.roomstatus.model.Room;
-import com.example.roomstatus.util.DateTimeUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -28,16 +26,16 @@ public class RoomService {
     private static final Set<String> ALLOWED_SORTS = Set.of("name", "capacity", "status");
     private static final Set<String> ALLOWED_ORDERS = Set.of("asc", "desc");
 
-    private final MockCampusDataService mockCampusDataService;
+    private final CampusDataProvider campusDataProvider;
     private final RoomMapper roomMapper;
     private final AvailabilityService availabilityService;
 
     public RoomService(
-            MockCampusDataService mockCampusDataService,
+            CampusDataProvider campusDataProvider,
             RoomMapper roomMapper,
             AvailabilityService availabilityService
     ) {
-        this.mockCampusDataService = mockCampusDataService;
+        this.campusDataProvider = campusDataProvider;
         this.roomMapper = roomMapper;
         this.availabilityService = availabilityService;
     }
@@ -49,7 +47,7 @@ public class RoomService {
 
         Instant referenceTime = Instant.now();
 
-        return mockCampusDataService.getRooms().stream()
+        return campusDataProvider.getRooms().stream()
                 .filter(room -> matchesFilters(room, normalizedRequest, referenceTime))
                 .sorted(buildComparator(normalizedRequest, referenceTime))
                 .map(room -> roomMapper.toSummaryDto(room, referenceTime))
@@ -58,7 +56,7 @@ public class RoomService {
 
     @Cacheable(value = "room-details", key = "#code")
     public RoomDto getRoomByCode(String code) {
-        Room room = findRoomByCode(code);
+        Room room = campusDataProvider.getRoomByCode(normalizeRequiredText(code, "code"));
         return roomMapper.toDetailDto(room, Instant.now());
     }
 
@@ -74,16 +72,10 @@ public class RoomService {
             throw new InvalidRequestException("La date de début doit être antérieure ou égale à la date de fin");
         }
 
-        Room room = findRoomByCode(normalizedCode);
-
-        List<com.example.roomstatus.model.RoomEvent> events = room.scheduleToday().stream()
-                .filter(event -> DateTimeUtils.isWithinDateRange(event, start, end))
-                .toList();
-
         return new RoomScheduleResponse(
-                room.code(),
+                normalizedCode,
                 new RoomScheduleResponse.Period(start, end),
-                roomMapper.toEventDtos(events)
+                roomMapper.toEventDtos(campusDataProvider.getRoomSchedule(normalizedCode, start, end))
         );
     }
 
@@ -99,17 +91,6 @@ public class RoomService {
                 normalizedRequest.sort(),
                 normalizedRequest.order()
         );
-    }
-
-    private Room findRoomByCode(String code) {
-        String normalizedCode = normalizeRequiredText(code, "code");
-
-        return mockCampusDataService.getRooms().stream()
-                .filter(room -> room.code().equalsIgnoreCase(normalizedCode))
-                .findFirst()
-                .orElseThrow(() -> new RoomNotFoundException(
-                        "La salle avec le code '%s' n'existe pas".formatted(normalizedCode)
-                ));
     }
 
     private void validateSearchRequest(RoomSearchRequest request) {

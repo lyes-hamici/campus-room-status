@@ -20,3 +20,15 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  google:
+    enabled: false
+    application-name: room-status
+    customer: my_customer
+    delegated-user: ${GOOGLE_DELEGATED_USER:}
+    service-account-key-path: ${GOOGLE_SERVICE_ACCOUNT_KEY_PATH:}
+    time-zone: Europe/Paris
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+    max-results-per-page: 100

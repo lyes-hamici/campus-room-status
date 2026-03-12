@@ -10,17 +10,17 @@ import java.util.List;
 @Service
 public class BuildingService {
 
-    private final MockCampusDataService mockCampusDataService;
+    private final CampusDataProvider campusDataProvider;
     private final BuildingMapper buildingMapper;
 
-    public BuildingService(MockCampusDataService mockCampusDataService, BuildingMapper buildingMapper) {
-        this.mockCampusDataService = mockCampusDataService;
+    public BuildingService(CampusDataProvider campusDataProvider, BuildingMapper buildingMapper) {
+        this.campusDataProvider = campusDataProvider;
         this.buildingMapper = buildingMapper;
     }
 
     @Cacheable("buildings")
     public List<BuildingDto> getBuildings() {
-        return mockCampusDataService.getBuildings().stream()
+        return campusDataProvider.getBuildings().stream()
                 .map(buildingMapper::toDto)
                 .toList();
     }
