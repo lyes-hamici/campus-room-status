@@ -6,14 +6,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AppProperties {
 
     private boolean enabled = false;
-    private String applicationName = "room-status";
     private String customer = "my_customer";
-    private String delegatedUser;
-    private String serviceAccountKeyPath;
+    private String registrationId = "google";
     private String timeZone = "Europe/Paris";
-    private int connectTimeoutMs = 5000;
-    private int readTimeoutMs = 10000;
-    private int maxResultsPerPage = 100;
 
     public boolean isEnabled() {
         return enabled;
@@ -21,14 +16,6 @@ public class AppProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public String getApplicationName() {
-        return applicationName;
-    }
-
-    public void setApplicationName(String applicationName) {
-        this.applicationName = applicationName;
     }
 
     public String getCustomer() {
@@ -39,20 +26,12 @@ public class AppProperties {
         this.customer = customer;
     }
 
-    public String getDelegatedUser() {
-        return delegatedUser;
+    public String getRegistrationId() {
+        return registrationId;
     }
 
-    public void setDelegatedUser(String delegatedUser) {
-        this.delegatedUser = delegatedUser;
-    }
-
-    public String getServiceAccountKeyPath() {
-        return serviceAccountKeyPath;
-    }
-
-    public void setServiceAccountKeyPath(String serviceAccountKeyPath) {
-        this.serviceAccountKeyPath = serviceAccountKeyPath;
+    public void setRegistrationId(String registrationId) {
+        this.registrationId = registrationId;
     }
 
     public String getTimeZone() {
@@ -61,29 +40,5 @@ public class AppProperties {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
-    }
-
-    public int getConnectTimeoutMs() {
-        return connectTimeoutMs;
-    }
-
-    public void setConnectTimeoutMs(int connectTimeoutMs) {
-        this.connectTimeoutMs = connectTimeoutMs;
-    }
-
-    public int getReadTimeoutMs() {
-        return readTimeoutMs;
-    }
-
-    public void setReadTimeoutMs(int readTimeoutMs) {
-        this.readTimeoutMs = readTimeoutMs;
-    }
-
-    public int getMaxResultsPerPage() {
-        return maxResultsPerPage;
-    }
-
-    public void setMaxResultsPerPage(int maxResultsPerPage) {
-        this.maxResultsPerPage = maxResultsPerPage;
     }
 }
