@@ -24,11 +24,52 @@ springdoc:
 app:
   google:
     enabled: false
-    application-name: room-status
     customer: my_customer
-    delegated-user: ${GOOGLE_DELEGATED_USER:}
-    service-account-key-path: ${GOOGLE_SERVICE_ACCOUNT_KEY_PATH:}
+    registration-id: google
     time-zone: Europe/Paris
-    connect-timeout-ms: 5000
-    read-timeout-ms: 10000
-    max-results-per-page: 100
+
+  campus:
+    rooms:
+      - code: AMPHI-A
+        name: Amphithéâtre A
+        calendar-id: amphi-a@group.calendar.google.com
+        building-id: BAT-A
+        building-name: Bâtiment A - Informatique
+        address: 10 rue de l'Innovation
+        floor: "1"
+        capacity: 150
+        type: Cours magistral
+        maintenance: false
+
+      - code: LAB-INFO-1
+        name: Laboratoire Informatique 1
+        calendar-id: lab-info-1@group.calendar.google.com
+        building-id: BAT-A
+        building-name: Bâtiment A - Informatique
+        address: 10 rue de l'Innovation
+        floor: "2"
+        capacity: 30
+        type: TP
+        maintenance: false
+
+      - code: LAB-INFO-2
+        name: Laboratoire Informatique 2
+        calendar-id: lab-info-2@group.calendar.google.com
+        building-id: BAT-A
+        building-name: Bâtiment A - Informatique
+        address: 10 rue de l'Innovation
+        floor: "2"
+        capacity: 24
+        type: TP
+        maintenance: false
+
+      - code: MEETING-B1
+        name: Salle de réunion B1
+        calendar-id: meeting-b1@group.calendar.google.com
+        building-id: BAT-B
+        building-name: Bâtiment B - Général
+        address: 12 rue de l'Innovation
+        floor: RDC
+        capacity: 12
+        type: Réunion
+        maintenance: true
