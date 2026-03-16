@@ -1,19 +1,19 @@
 package com.example.roomstatus.service;
 
+import com.example.roomstatus.config.AppProperties;
+import com.example.roomstatus.config.CampusCatalogProperties;
 import com.example.roomstatus.exception.RoomNotFoundException;
-import com.example.roomstatus.integration.google.GoogleAdminDirectoryClient;
 import com.example.roomstatus.integration.google.GoogleCalendarClient;
-import com.example.roomstatus.integration.google.GoogleMapper;
 import com.example.roomstatus.model.Building;
 import com.example.roomstatus.model.Room;
 import com.example.roomstatus.model.RoomEvent;
-import com.google.api.services.admin.directory.model.CalendarResource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,42 +22,51 @@ import java.util.concurrent.atomic.AtomicReference;
 @ConditionalOnProperty(prefix = "app.google", name = "enabled", havingValue = "true")
 public class GoogleWorkspaceDataService implements CampusDataProvider {
 
-    private final GoogleAdminDirectoryClient googleAdminDirectoryClient;
+    private final CampusCatalogProperties campusCatalogProperties;
     private final GoogleCalendarClient googleCalendarClient;
-    private final GoogleMapper googleMapper;
-    private final com.example.roomstatus.config.AppProperties properties;
+    private final AppProperties appProperties;
     private final AtomicReference<Instant> lastSuccessfulSync = new AtomicReference<>();
 
     public GoogleWorkspaceDataService(
-            GoogleAdminDirectoryClient googleAdminDirectoryClient,
+            CampusCatalogProperties campusCatalogProperties,
             GoogleCalendarClient googleCalendarClient,
-            GoogleMapper googleMapper,
-            com.example.roomstatus.config.AppProperties properties
+            AppProperties appProperties
     ) {
-        this.googleAdminDirectoryClient = googleAdminDirectoryClient;
+        this.campusCatalogProperties = campusCatalogProperties;
         this.googleCalendarClient = googleCalendarClient;
-        this.googleMapper = googleMapper;
-        this.properties = properties;
+        this.appProperties = appProperties;
     }
 
     @Override
     public List<Building> getBuildings() {
-        DirectoryIndex directoryIndex = loadDirectoryIndex();
+        Map<String, BuildingAccumulator> buildings = new LinkedHashMap<>();
+
+        for (CampusCatalogProperties.RoomDefinition room : campusCatalogProperties.getRooms()) {
+            BuildingAccumulator accumulator = buildings.computeIfAbsent(
+                    room.getBuildingId(),
+                    ignored -> new BuildingAccumulator(
+                            room.getBuildingId(),
+                            room.getBuildingName(),
+                            room.getAddress()
+                    )
+            );
+
+            accumulator.addFloor(room.getFloor());
+        }
+
         markSuccessfulSync();
-        return List.copyOf(directoryIndex.buildingsById().values());
+
+        return buildings.values().stream()
+                .map(BuildingAccumulator::toBuilding)
+                .toList();
     }
 
     @Override
     public List<Room> getRooms() {
-        DirectoryIndex directoryIndex = loadDirectoryIndex();
-        LocalDate today = LocalDate.now(ZoneId.of(properties.getTimeZone()));
+        LocalDate today = LocalDate.now(ZoneId.of(appProperties.getTimeZone()));
 
-        List<Room> rooms = directoryIndex.calendarResources().stream()
-                .map(calendarResource -> googleMapper.toRoom(
-                        calendarResource,
-                        googleMapper.resolveBuilding(calendarResource, directoryIndex.buildingsById()),
-                        googleCalendarClient.listEvents(calendarResource.getResourceEmail(), today, today)
-                ))
+        List<Room> rooms = campusCatalogProperties.getRooms().stream()
+                .map(room -> toRoom(room, today, today))
                 .toList();
 
         markSuccessfulSync();
@@ -66,31 +75,19 @@ public class GoogleWorkspaceDataService implements CampusDataProvider {
 
     @Override
     public Room getRoomByCode(String code) {
-        String normalizedCode = normalizeCode(code);
-        DirectoryIndex directoryIndex = loadDirectoryIndex();
-        CalendarResource calendarResource = findCalendarResourceByCode(normalizedCode, directoryIndex.calendarResources());
-        LocalDate today = LocalDate.now(ZoneId.of(properties.getTimeZone()));
+        CampusCatalogProperties.RoomDefinition room = findRoomDefinition(code);
+        LocalDate today = LocalDate.now(ZoneId.of(appProperties.getTimeZone()));
 
-        Room room = googleMapper.toRoom(
-                calendarResource,
-                googleMapper.resolveBuilding(calendarResource, directoryIndex.buildingsById()),
-                googleCalendarClient.listEvents(calendarResource.getResourceEmail(), today, today)
-        );
-
+        Room result = toRoom(room, today, today);
         markSuccessfulSync();
-        return room;
+        return result;
     }
 
     @Override
     public List<RoomEvent> getRoomSchedule(String code, LocalDate start, LocalDate end) {
-        String normalizedCode = normalizeCode(code);
-        DirectoryIndex directoryIndex = loadDirectoryIndex();
-        CalendarResource calendarResource = findCalendarResourceByCode(normalizedCode, directoryIndex.calendarResources());
+        CampusCatalogProperties.RoomDefinition room = findRoomDefinition(code);
 
-        List<RoomEvent> events = googleMapper.toRoomEvents(
-                googleCalendarClient.listEvents(calendarResource.getResourceEmail(), start, end)
-        );
-
+        List<RoomEvent> events = googleCalendarClient.listEvents(room.getCalendarId(), start, end);
         markSuccessfulSync();
         return events;
     }
@@ -105,42 +102,62 @@ public class GoogleWorkspaceDataService implements CampusDataProvider {
         return true;
     }
 
-    private DirectoryIndex loadDirectoryIndex() {
-        List<com.google.api.services.admin.directory.model.Building> googleBuildings =
-                googleAdminDirectoryClient.listBuildings();
+    private Room toRoom(CampusCatalogProperties.RoomDefinition room, LocalDate start, LocalDate end) {
+        Building building = new Building(
+                room.getBuildingId(),
+                room.getBuildingName(),
+                room.getAddress(),
+                room.getFloor() == null ? List.of() : List.of(room.getFloor())
+        );
 
-        List<CalendarResource> calendarResources =
-                googleAdminDirectoryClient.listCalendarResources();
+        List<RoomEvent> schedule = googleCalendarClient.listEvents(room.getCalendarId(), start, end);
 
-        Map<String, Building> buildingsById = googleMapper.toBuildingIndex(googleBuildings);
-
-        for (CalendarResource calendarResource : calendarResources) {
-            googleMapper.resolveBuilding(calendarResource, buildingsById);
-        }
-
-        return new DirectoryIndex(buildingsById, calendarResources);
+        return new Room(
+                room.getCode(),
+                room.getName(),
+                room.getCalendarId(),
+                building,
+                room.getFloor(),
+                room.getCapacity(),
+                room.getType(),
+                room.isMaintenance(),
+                schedule
+        );
     }
 
-    private CalendarResource findCalendarResourceByCode(String code, List<CalendarResource> resources) {
-        return resources.stream()
-                .filter(resource -> googleMapper.resolveRoomCode(resource).equalsIgnoreCase(code))
+    private CampusCatalogProperties.RoomDefinition findRoomDefinition(String code) {
+        return campusCatalogProperties.getRooms().stream()
+                .filter(room -> room.getCode() != null && room.getCode().equalsIgnoreCase(code))
                 .findFirst()
                 .orElseThrow(() -> new RoomNotFoundException(
                         "La salle avec le code '%s' n'existe pas".formatted(code)
                 ));
     }
 
-    private String normalizeCode(String code) {
-        return code == null ? "" : code.trim();
-    }
-
     private void markSuccessfulSync() {
         lastSuccessfulSync.set(Instant.now());
     }
 
-    private record DirectoryIndex(
-            Map<String, Building> buildingsById,
-            List<CalendarResource> calendarResources
-    ) {
+    private static class BuildingAccumulator {
+        private final String id;
+        private final String name;
+        private final String address;
+        private final java.util.Set<String> floors = new java.util.LinkedHashSet<>();
+
+        private BuildingAccumulator(String id, String name, String address) {
+            this.id = id;
+            this.name = name;
+            this.address = address;
+        }
+
+        private void addFloor(String floor) {
+            if (floor != null && !floor.isBlank()) {
+                floors.add(floor);
+            }
+        }
+
+        private Building toBuilding() {
+            return new Building(id, name, address, List.copyOf(floors));
+        }
     }
 }
