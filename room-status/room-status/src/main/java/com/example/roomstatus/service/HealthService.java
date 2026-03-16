@@ -6,7 +6,6 @@ import com.example.roomstatus.integration.google.GoogleConnectionChecker;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.Instant;
 
 @Service
 public class HealthService {
@@ -28,12 +27,12 @@ public class HealthService {
     public HealthResponse getHealth() {
         long start = System.nanoTime();
 
-        boolean googleAdminApiConnected = properties.isEnabled() && googleConnectionChecker.isAdminDirectoryConnected();
+        boolean googleAdminApiConnected = false;
         boolean googleCalendarApiConnected = properties.isEnabled() && googleConnectionChecker.isCalendarConnected();
 
         long responseTimeMs = Duration.ofNanos(System.nanoTime() - start).toMillis();
 
-        String status = (!properties.isEnabled() || (googleAdminApiConnected && googleCalendarApiConnected))
+        String status = (!properties.isEnabled() || googleCalendarApiConnected)
                 ? "healthy"
                 : "degraded";
 
