@@ -71,6 +71,33 @@ class RoomControllerIntegrationTest {
     }
 
     @Test
+    void shouldReturn200WhenFilteringRoomsByKnownBuilding() throws Exception {
+        mockMvc.perform(get("/api/v1/rooms")
+                        .param("building", "BAT-A"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.filters.building").value("BAT-A"))
+                .andExpect(jsonPath("$.count").value(3));
+    }
+
+    @Test
+    void shouldReturn400WhenFilteringRoomsByUnknownBuilding() throws Exception {
+        mockMvc.perform(get("/api/v1/rooms")
+                        .param("building", "test"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value(containsString("BAT-A")));
+    }
+
+    @Test
+    void shouldReturn400WhenFilteringRoomsByUnknownType() throws Exception {
+        mockMvc.perform(get("/api/v1/rooms")
+                        .param("type", "zer"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value(containsString("TP")));
+    }
+
+    @Test
     void shouldReturn200WhenListingRooms() throws Exception {
         mockMvc.perform(get("/api/v1/rooms"))
                 .andExpect(status().isOk())

@@ -6,7 +6,6 @@ import com.example.roomstatus.integration.google.GoogleConnectionChecker;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.Instant;
 
 @Service
 public class HealthService {

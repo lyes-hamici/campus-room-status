@@ -7,6 +7,7 @@ import com.example.roomstatus.dto.request.RoomSearchRequest;
 import com.example.roomstatus.dto.response.RoomScheduleResponse;
 import com.example.roomstatus.exception.InvalidRequestException;
 import com.example.roomstatus.mapper.RoomMapper;
+import com.example.roomstatus.model.Building;
 import com.example.roomstatus.model.Room;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -126,6 +129,9 @@ public class RoomService {
         if (request.order() != null && !ALLOWED_ORDERS.contains(request.order().toLowerCase(Locale.ROOT))) {
             throw new InvalidRequestException("order doit être asc ou desc");
         }
+
+        validateBuildingFilter(request.building());
+        validateTypeFilter(request.type());
     }
 
     private boolean matchesFilters(Room room, RoomSearchRequest request, Instant referenceTime) {
@@ -158,6 +164,40 @@ public class RoomService {
             return RoomSearchRequest.empty();
         }
         return request.normalized();
+    }
+
+    private void validateBuildingFilter(String building) {
+        if (building == null) {
+            return;
+        }
+
+        Set<String> availableBuildings = campusDataProvider.getBuildings().stream()
+                .map(Building::id)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (availableBuildings.stream().noneMatch(value -> value.equalsIgnoreCase(building))) {
+            throw new InvalidRequestException(
+                    "building doit correspondre à l'un des bâtiments connus : %s"
+                            .formatted(String.join(", ", availableBuildings))
+            );
+        }
+    }
+
+    private void validateTypeFilter(String type) {
+        if (type == null) {
+            return;
+        }
+
+        Set<String> availableTypes = campusDataProvider.getRooms().stream()
+                .map(Room::type)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (availableTypes.stream().noneMatch(value -> value.equalsIgnoreCase(type))) {
+            throw new InvalidRequestException(
+                    "type doit correspondre à l'un des types connus : %s"
+                            .formatted(String.join(", ", availableTypes))
+            );
+        }
     }
 
     private String normalizeRequiredText(String value, String fieldName) {
