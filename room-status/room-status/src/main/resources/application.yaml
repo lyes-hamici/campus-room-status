@@ -1,26 +1,12 @@
 spring:
   application:
     name: room-status
-  config:
-    import: optional:file:.env[.properties]
   cache:
     cache-names:
       - buildings
       - rooms
       - room-details
       - room-schedules
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${CLIENT_ID:}
-            client-secret: ${CLIENT_SECRET:}
-            scope:
-              - openid
-              - profile
-              - email
-              - https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly
 
 management:
   endpoints:
@@ -37,7 +23,7 @@ springdoc:
 
 app:
   google:
-    enabled: true
+    enabled: false
     application-name: room-status
     customer: my_customer
     delegated-user: ${GOOGLE_DELEGATED_USER:}
