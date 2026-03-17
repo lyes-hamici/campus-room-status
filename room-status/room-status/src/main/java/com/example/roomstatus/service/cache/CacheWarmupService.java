@@ -9,6 +9,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+/**
+ * Lance une premiere lecture au demarrage pour remplir les caches les plus utilises.
+ */
 @Service
 public class CacheWarmupService {
 
@@ -25,6 +28,7 @@ public class CacheWarmupService {
     @EventListener(ApplicationReadyEvent.class)
     public void warmUpCaches() {
         try {
+            // On chauffe uniquement les listes principales pour accelerer les premiers appels.
             buildingService.getBuildings();
             roomService.getRooms(RoomSearchRequest.empty());
         } catch (Exception exception) {

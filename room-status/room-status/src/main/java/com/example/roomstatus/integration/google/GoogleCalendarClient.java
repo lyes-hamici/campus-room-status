@@ -14,6 +14,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Client bas niveau vers Google Calendar pour lire les evenements d'une salle.
+ */
 @Component
 @ConditionalOnProperty(prefix = "app.google", name = "enabled", havingValue = "true")
 public class GoogleCalendarClient {
@@ -32,6 +35,7 @@ public class GoogleCalendarClient {
 
         ZoneId zoneId = ZoneId.of(properties.getTimeZone());
         DateTime timeMin = new DateTime(start.atStartOfDay(zoneId).toInstant().toEpochMilli());
+        // timeMax est exclusif dans l'API Google, d'ou le +1 jour pour couvrir toute la date de fin.
         DateTime timeMax = new DateTime(end.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli());
 
         try {
@@ -52,6 +56,7 @@ public class GoogleCalendarClient {
                 var response = request.execute();
 
                 if (response.getItems() != null) {
+                    // Les evenements annules restent parfois presents dans la reponse Google.
                     events.addAll(
                             response.getItems().stream()
                                     .filter(event -> !"cancelled".equalsIgnoreCase(event.getStatus()))

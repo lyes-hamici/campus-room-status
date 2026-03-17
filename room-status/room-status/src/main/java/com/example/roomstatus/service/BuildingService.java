@@ -7,6 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Service simple dedie aux batiments.
+ * Il isole la lecture des batiments et leur conversion en DTO.
+ */
 @Service
 public class BuildingService {
 

@@ -18,6 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Implementation connectee a Google Workspace.
+ * Elle combine l'annuaire (batiments / ressources) et Calendar
+ * pour produire le modele interne de l'application.
+ */
 @Service
 @ConditionalOnProperty(prefix = "app.google", name = "enabled", havingValue = "true")
 public class GoogleWorkspaceDataService implements CampusDataProvider {
@@ -114,6 +119,8 @@ public class GoogleWorkspaceDataService implements CampusDataProvider {
 
         Map<String, Building> buildingsById = googleMapper.toBuildingIndex(googleBuildings);
 
+        // On force ici la resolution des batiments pour detecter rapidement
+        // une ressource mal rattachee pendant le chargement.
         for (CalendarResource calendarResource : calendarResources) {
             googleMapper.resolveBuilding(calendarResource, buildingsById);
         }
@@ -135,6 +142,7 @@ public class GoogleWorkspaceDataService implements CampusDataProvider {
     }
 
     private void markSuccessfulSync() {
+        // Memorise la derniere operation aboutie visible dans /health.
         lastSuccessfulSync.set(Instant.now());
     }
 

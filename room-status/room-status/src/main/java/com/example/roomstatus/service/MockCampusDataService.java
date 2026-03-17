@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Source de donnees locale utilisee par defaut.
+ * Elle permet de lancer l'API sans dependre de Google Workspace.
+ */
 @Service
 @ConditionalOnProperty(prefix = "app.google", name = "enabled", havingValue = "false", matchIfMissing = true)
 public class MockCampusDataService implements CampusDataProvider {
@@ -35,6 +39,8 @@ public class MockCampusDataService implements CampusDataProvider {
 
     @Override
     public List<Room> getRooms() {
+        // Les evenements sont reconstruits autour de "maintenant" pour
+        // garder des exemples parlants a chaque execution.
         java.time.Instant referenceNow = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
 
         Building buildingA = getBuildings().get(0);

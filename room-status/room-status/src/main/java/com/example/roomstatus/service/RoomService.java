@@ -22,6 +22,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Service metier principal autour des salles.
+ * Il centralise la validation, le filtrage, le tri et la transformation
+ * des donnees brutes provenant du CampusDataProvider.
+ */
 @Service
 public class RoomService {
 
@@ -48,6 +53,8 @@ public class RoomService {
         RoomSearchRequest normalizedRequest = normalizeRequest(request);
         validateSearchRequest(normalizedRequest);
 
+        // Une meme reference temporelle garantit des statuts coherents
+        // pour tout le resultat de la requete.
         Instant referenceTime = Instant.now();
 
         return campusDataProvider.getRooms().stream()
@@ -171,6 +178,8 @@ public class RoomService {
             return;
         }
 
+        // Les valeurs autorisees viennent de la source active,
+        // ce qui evite de dupliquer une liste en dur.
         Set<String> availableBuildings = campusDataProvider.getBuildings().stream()
                 .map(Building::id)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -188,6 +197,7 @@ public class RoomService {
             return;
         }
 
+        // Le filtrage sur le type reste aligne avec les types reellement exposes.
         Set<String> availableTypes = campusDataProvider.getRooms().stream()
                 .map(Room::type)
                 .collect(Collectors.toCollection(LinkedHashSet::new));

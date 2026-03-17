@@ -16,6 +16,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Convertit les exceptions metier et techniques en reponses HTTP homogenes.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

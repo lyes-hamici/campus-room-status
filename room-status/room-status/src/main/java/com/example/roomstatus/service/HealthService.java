@@ -36,6 +36,7 @@ public class HealthService {
                 ? "healthy"
                 : "degraded";
 
+        // En mode mock, l'application est consideree saine meme sans Google.
         return new HealthResponse(
                 status,
                 "1.0.0",

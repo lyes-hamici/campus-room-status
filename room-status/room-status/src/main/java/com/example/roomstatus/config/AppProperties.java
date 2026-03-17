@@ -2,6 +2,9 @@ package com.example.roomstatus.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * Centralise la configuration d'integration Google chargee depuis application.yml.
+ */
 @ConfigurationProperties(prefix = "app.google")
 public class AppProperties {
 

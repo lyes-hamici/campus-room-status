@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Adapte les objets Google Workspace vers le modele interne du projet.
+ */
 @Component
 public class GoogleMapper {
 
@@ -104,6 +107,8 @@ public class GoogleMapper {
             return calendarResource.getResourceId().trim();
         }
 
+        // On prefere un identifiant stable fourni par Google, puis un code
+        // derive de l'email ou du nom si necessaire.
         String emailLocalPart = resolveLocalPart(calendarResource.getResourceEmail());
         if (hasText(emailLocalPart)) {
             return slugify(emailLocalPart);
@@ -133,6 +138,7 @@ public class GoogleMapper {
             return null;
         }
 
+        // Google peut renvoyer un instant precis ou une date "all-day".
         if (eventDateTime.getDateTime() != null) {
             return Instant.ofEpochMilli(eventDateTime.getDateTime().getValue());
         }

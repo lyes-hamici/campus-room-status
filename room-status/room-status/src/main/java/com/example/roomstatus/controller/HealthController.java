@@ -5,6 +5,9 @@ import com.example.roomstatus.service.HealthService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Endpoint de supervision minimal pour verifier l'etat global de l'application.
+ */
 @RestController
 public class HealthController {
 

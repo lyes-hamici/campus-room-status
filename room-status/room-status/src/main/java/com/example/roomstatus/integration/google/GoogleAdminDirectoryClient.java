@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Client bas niveau vers l'Admin Directory API pour recuperer batiments et ressources.
+ */
 @Component
 @ConditionalOnProperty(prefix = "app.google", name = "enabled", havingValue = "true")
 public class GoogleAdminDirectoryClient {
@@ -33,6 +36,7 @@ public class GoogleAdminDirectoryClient {
                 var request = directoryService.resources().buildings().list(properties.getCustomer());
                 request.setMaxResults(properties.getMaxResultsPerPage());
 
+                // Pagination manuelle pour ne pas perdre de resultats sur les gros annuaires.
                 if (hasText(pageToken)) {
                     request.setPageToken(pageToken);
                 }
@@ -61,6 +65,7 @@ public class GoogleAdminDirectoryClient {
                 var request = directoryService.resources().calendars().list(properties.getCustomer());
                 request.setMaxResults(properties.getMaxResultsPerPage());
 
+                // Meme mecanisme de pagination pour toutes les ressources calendrier.
                 if (hasText(pageToken)) {
                     request.setPageToken(pageToken);
                 }

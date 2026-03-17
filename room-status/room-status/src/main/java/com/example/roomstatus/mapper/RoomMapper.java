@@ -11,6 +11,11 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Convertit le modele interne Room vers les DTO exposes par l'API.
+ * Le mapper enrichit aussi la reponse avec les informations de disponibilite
+ * calculees a partir de l'horaire courant.
+ */
 @Component
 public class RoomMapper {
 
@@ -59,6 +64,7 @@ public class RoomMapper {
                 .map(eventMapper::toDto)
                 .toList();
 
+        // Le detail reprend egalement tout le planning du jour pour la fiche salle.
         return new RoomDto(
                 room.code(),
                 room.name(),

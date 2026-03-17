@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * Couche HTTP des salles.
+ * Elle se limite a normaliser les parametres web puis delegue
+ * la logique metier au RoomService.
+ */
 @RestController
 @RequestMapping("/api/v1")
 public class RoomController {

@@ -7,6 +7,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
+/**
+ * Regroupe les comparaisons de dates utilisees dans la logique de disponibilite.
+ */
 public final class DateTimeUtils {
 
     private DateTimeUtils() {
@@ -22,6 +25,7 @@ public final class DateTimeUtils {
     }
 
     public static boolean isWithinDateRange(RoomEvent event, LocalDate start, LocalDate end) {
+        // Le filtrage par plage de dates repose sur la date UTC de debut de l'evenement.
         LocalDate eventDate = event.start().atZone(ZoneOffset.UTC).toLocalDate();
         return !eventDate.isBefore(start) && !eventDate.isAfter(end);
     }

@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
+/**
+ * Endpoint de consultation des batiments exposes par l'API.
+ */
 @RestController
 public class BuildingController {
 

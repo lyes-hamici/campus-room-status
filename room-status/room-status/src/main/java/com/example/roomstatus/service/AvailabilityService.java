@@ -12,6 +12,11 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.Optional;
 
+/**
+ * Calcule l'etat courant d'une salle a partir de son planning du jour.
+ * Toute la logique de "available / occupied / upcoming / maintenance"
+ * est centralisee ici pour rester coherente partout dans l'API.
+ */
 @Service
 public class AvailabilityService {
 
@@ -28,6 +33,8 @@ public class AvailabilityService {
     }
 
     public RoomStatus resolveStatus(Room room, Instant referenceTime) {
+        // Le resolveur travaille a partir de l'evenement en cours,
+        // du prochain evenement et du flag de maintenance.
         return StatusResolver.resolve(
                 room.maintenance(),
                 findCurrentEvent(room, referenceTime),

@@ -7,6 +7,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
+/**
+ * Traduit des informations de planning en un statut metier exploitable par l'API.
+ */
 public final class StatusResolver {
 
     private static final Duration UPCOMING_THRESHOLD = Duration.ofMinutes(30);
@@ -20,12 +23,15 @@ public final class StatusResolver {
             Optional<RoomEvent> nextEvent,
             Instant referenceTime
     ) {
+        // La maintenance prend toujours le dessus sur le planning.
         if (maintenance) {
             return RoomStatus.MAINTENANCE;
         }
         if (currentEvent.isPresent()) {
             return RoomStatus.OCCUPIED;
         }
+        // Une salle est "upcoming" uniquement si le prochain evenement
+        // commence bientot selon le seuil defini ci-dessus.
         if (nextEvent.isPresent() && DateTimeUtils.startsWithin(nextEvent.get(), referenceTime, UPCOMING_THRESHOLD)) {
             return RoomStatus.UPCOMING;
         }
